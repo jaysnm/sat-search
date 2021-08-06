@@ -51,12 +51,15 @@ class Search(object):
             kwargs['sortby'] = sorts
         return Search(**kwargs)
 
-    def found(self, headers=None):
+    def found(self, headers=None, limit=True):
         """ Small query to determine total number of hits """
-        kwargs = {
-            'limit': 0
-        }
-        kwargs.update(self.kwargs)
+        if limit:
+            kwargs= {
+                'limit': 0
+            }
+            kwargs.update(self.kwargs)
+        else: # temporary fix for stac-fastapi backend
+            kwargs = self.kwargs
         url = urljoin(self.url, 'search')
         
         results = self.query(url=url, headers=headers, **kwargs)
@@ -67,6 +70,9 @@ class Search(object):
             found = results['context']['matched']
         elif 'numberMatched' in results:
             found = results['numberMatched']
+        # stac-fastapi catalog handler
+        elif 'features' in results:
+            found = len(results['features'])
         return found
 
     def query(self, url=None, headers=None, **kwargs):
